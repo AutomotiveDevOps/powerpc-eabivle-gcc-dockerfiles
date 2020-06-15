@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag S32DS-POWER-v1-2:$(date +%s)
+      run: docker build . --file Dockerfile --tag s32ds-power-v1-2:$(date +%s)
