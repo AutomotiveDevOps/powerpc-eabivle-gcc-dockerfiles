@@ -33,7 +33,7 @@ $(error PROJ_NAME is undefined)
 endif
 
 # Determine the Project's Directory
-SRC_DIR:=/S32DS/build_tools/src
+SRC_DIR:=/S32DS/src
 # Determine the DEVKIT-Makefile directory.
 S32DS_BUILD_TOOLS:=/S32DS/build_tools
 # Include board configuration
