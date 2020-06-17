@@ -12,6 +12,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Describe Git Env
-      run: git describe --dirty --tags
+      run: git describe --tags
     - name: Build the Docker images
       run: sh build.sh 
