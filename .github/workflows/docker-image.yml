@@ -12,4 +12,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker images
-      run: docker build . --file Dockerfile --tag s32ds-power-v1-2:latest --tag s32ds-power-v1-2:$(git describe --dirty --tags)
+      run: sh build.sh 
