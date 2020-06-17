@@ -11,7 +11,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Describe Git Env
-      run: git describe --tags
     - name: Build the Docker images
       run: sh build.sh 
