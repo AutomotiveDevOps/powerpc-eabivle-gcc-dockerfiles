@@ -11,10 +11,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    # Runs a single command using the runners shell
-    - name: Run a one-line script
-      run: echo Hello, world ${GITHUB_WORKSPACE}!
     - name: Build the Docker images
-      run: |
-        docker build . --file Dockerfile --tag s32ds-power-v1-2:latest
-        docker build . --file Dockerfile --tag s32ds-power-v1-2:$(date +%s)
+      run: docker build . --file Dockerfile --tag s32ds-power-v1-2:latest --tag s32ds-power-v1-2:$(git describe --dirty --tags)
