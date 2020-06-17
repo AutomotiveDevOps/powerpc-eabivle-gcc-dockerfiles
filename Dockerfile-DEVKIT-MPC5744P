@@ -1,4 +1,0 @@
-FROM s32ds-power-v1-2:latest
-ENV PATH=${PATH}:/S32DS/build_tools/powerpc-eabivle-4_9/bin
-WORKDIR /S32DS/build_tools
-COPY devkit_5744p.mk /S32DS/build_tools/
