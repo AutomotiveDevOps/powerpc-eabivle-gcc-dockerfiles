@@ -3,7 +3,8 @@ It's 2020 Automotive.
 
 # Usage
 
-```git clone https://github.com/AutomotiveDevOps/powerpc-eabivle-gcc-dockerfiles.git```
+```
+git clone https://github.com/AutomotiveDevOps/powerpc-eabivle-gcc-dockerfiles.git
 cd powerpc-eabivle-gcc-dockerfiles/
 sh build.sh
 ```
