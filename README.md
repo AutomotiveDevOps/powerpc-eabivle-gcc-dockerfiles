@@ -1,5 +1,6 @@
 # powerpc-eabivle-gcc-dockerfiles
-It's 2022 Automotive.
+
+Build powerpc-eabivle binaries in Docker.
 
 # Usage
 
