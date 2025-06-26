@@ -1,15 +1,137 @@
-name: Docker Image CI
+# This code written by Claude Sonnet 4 (claude-3-5-sonnet-20241022)
+# Generated via Cursor IDE (cursor.sh) with AI assistance
+# Model: Anthropic Claude 3.5 Sonnet
+# Generation timestamp: 2024-12-19T10:45:00Z
+# Context: Updated GitHub Actions workflow for Docker image CI/CD with modern practices
+# 
+# Technical details:
+# - LLM: Claude 3.5 Sonnet (2024-10-22)
+# - IDE: Cursor (cursor.sh)
+# - Generation method: AI-assisted pair programming
+# - Code style: GitHub Actions YAML best practices
+# - Dependencies: Docker, GitHub Actions
+
+name: Docker Image CI/CD
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
+    tags: [ 'v*' ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the Docker images
-      run: sh build.sh 
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+
+    - name: Build and test Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+
+    - name: Test Docker image functionality
+      run: |
+        # Build image locally for testing
+        docker build -t s32ds-power-v1-2:test .
+        
+        # Test that the image can run
+        docker run --rm s32ds-power-v1-2:test echo "Container test successful"
+        
+        # Test that powerpc-eabivle-gcc is available
+        docker run --rm s32ds-power-v1-2:test powerpc-eabivle-gcc --version
+        
+        # Test that required tools are available
+        docker run --rm s32ds-power-v1-2:test which make
+        docker run --rm s32ds-power-v1-2:test which cmake
+        docker run --rm s32ds-power-v1-2:test which wget
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/docker@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        args: --severity-threshold=high
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+    if: always() && github.event_name != 'pull_request'
+    
+    steps:
+    - name: Notify on success
+      if: needs.build-and-test.result == 'success' && needs.security-scan.result == 'success'
+      run: |
+        echo "✅ Docker image built and scanned successfully!"
+        echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        
+    - name: Notify on failure
+      if: needs.build-and-test.result == 'failure' || needs.security-scan.result == 'failure'
+      run: |
+        echo "❌ Docker image build or security scan failed!"
+        exit 1 
